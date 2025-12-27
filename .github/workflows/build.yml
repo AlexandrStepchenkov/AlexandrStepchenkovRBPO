@@ -66,3 +66,69 @@ jobs:
         with:
           name: dependency-check-report
           path: target/dependency-check-report.html
+
+  dast-baseline:
+    name: DAST Baseline Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: java-application
+          path: target
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Start Application
+        run: |
+          nohup java -jar target/*.jar > app.log 2>&1 &
+          sleep 30
+          touch zap-rules.tsv
+          chmod 777 zap-rules.tsv
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: 'http://localhost:8080'
+          rules_file_name: 'zap-rules.tsv'
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: 'zap-baseline-report'
+
+    dast-api:
+      name: DAST API Scan
+      runs-on: ubuntu-latest
+      needs: build
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/download-artifact@v4
+          with: { name: java-application, path: target }
+        - uses: actions/setup-java@v3
+          with: { distribution: 'temurin', java-version: '21' }
+        - run: |
+            nohup java -jar target/*.jar > app.log 2>&1 &
+            sleep 30
+            touch zap-rules.tsv
+            chmod 777 zap-rules.tsv
+
+        - name: ZAP API Scan
+          uses: zaproxy/action-api-scan@v0.10.0
+          continue-on-error: true
+          with:
+            target: 'http://localhost:8080/v3/api-docs'
+            format: openapi
+            rules_file_name: 'zap-rules.tsv'
+            allow_issue_writing: false
+            fail_action: false
+
+        - name: Upload API Report manually
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: zap-api-report
+            path: report_html.html
