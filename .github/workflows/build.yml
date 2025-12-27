@@ -76,7 +76,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: java-application
+          name: jar-artifact
           path: target
 
       - uses: actions/setup-java@v3
@@ -107,7 +107,7 @@ jobs:
       steps:
         - uses: actions/checkout@v4
         - uses: actions/download-artifact@v4
-          with: { name: java-application, path: target }
+          with: { name: jar-artifact, path: target }
         - uses: actions/setup-java@v3
           with: { distribution: 'temurin', java-version: '21' }
         - run: |
