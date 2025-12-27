@@ -100,7 +100,7 @@ jobs:
           fail_action: false
           artifact_name: 'zap-baseline-report'
 
-    dast-api:
+  dast-api:
       name: DAST API Scan
       runs-on: ubuntu-latest
       needs: build
